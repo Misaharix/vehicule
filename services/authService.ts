@@ -61,7 +61,7 @@ const authService = {
     try {
       const adminData = localStorage.getItem('admin_data')
       if (!adminData) return null
-      const response = await api.get('/auth/admin/me/')
+      const response = await api.get('/auth/admin/login/')
       return response.data
     } catch {
       return null
