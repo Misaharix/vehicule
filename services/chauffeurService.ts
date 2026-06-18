@@ -2,6 +2,9 @@ import api, { handleApiError } from './api';
 import { User, Admin, AuthResponse, AdminAuthResponse } from '@/types';
 
 class AuthService {
+  getAll(arg0: { page_size: number; }): any {
+    throw new Error('Method not implemented.');
+  }
   async getCurrentUser(): Promise<User | null> {
     try {
       const response = await api.get<AuthResponse>('/auth/me/');

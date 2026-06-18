@@ -43,17 +43,24 @@ export default function DashboardPage() {
       setIsLoading(true);
       setError(null);
       const response = await demandeService.getAll({ page_size: 5 });
-      setDemandes(response.results);
+      
+      // On extrait la liste de résultats en s'assurant que c'est un tableau
+      // Si response.results n'existe pas, on prend un tableau vide [] par défaut
+      const resultsList = Array.isArray(response?.results) ? response.results : [];
+      
+      setDemandes(resultsList);
 
-      // Calculate stats
-      const pending = response.results.filter((d) =>
-        d.status.includes('en_attente')
+      // Calcule les statistiques de manière sécurisée sur resultsList
+      const pending = resultsList.filter((d) =>
+        d?.status?.includes('en_attente')
       ).length;
-      const approved = response.results.filter((d) =>
-        d.status === 'approuvee'
+      
+      const approved = resultsList.filter((d) =>
+        d?.status === 'approuvee'
       ).length;
-      const rejected = response.results.filter((d) =>
-        d.status.includes('rejetee')
+      
+      const rejected = resultsList.filter((d) =>
+        d?.status?.includes('rejetee')
       ).length;
 
       setStats({ pending, approved, rejected });
