@@ -20,6 +20,7 @@ export default function DemandePage() {
   const [demande, setDemande] = useState<Demande | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
