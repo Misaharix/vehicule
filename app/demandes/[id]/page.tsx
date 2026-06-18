@@ -20,7 +20,6 @@ export default function DemandePage() {
   const [demande, setDemande] = useState<Demande | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -29,21 +28,23 @@ export default function DemandePage() {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated && params.id) {
+    if (isAuthenticated && params?.id) {
       loadDemande();
     }
-  }, [isAuthenticated, params.id]);
+  }, [isAuthenticated, params?.id]);
 
   const loadDemande = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      if (!params?.id) return;
       const id = typeof params.id === 'string' ? parseInt(params.id) : params.id;
       const data = await demandeService.getById(id);
       setDemande(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
       setError(errorMessage);
+    //  La correction :
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +63,7 @@ export default function DemandePage() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Non définie';
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: '2-digit',
@@ -143,7 +145,8 @@ export default function DemandePage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Demandeur</p>
-                    <p className="font-medium text-gray-900 mt-1">{demande.demandeur.nomComplet}</p>
+                    {/* SÉCURISÉ : Optional chaining pour éviter les crashes */}
+                    <p className="font-medium text-gray-900 mt-1">{demande.demandeur?.nomComplet || 'Inconnu'}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Motif</p>
@@ -152,13 +155,13 @@ export default function DemandePage() {
                   <div>
                     <p className="text-gray-500">Départ</p>
                     <p className="font-medium text-gray-900 mt-1">
-                      {new Date(demande.dateDepart).toLocaleDateString('fr-FR')}
+                      {demande.dateDepart ? new Date(demande.dateDepart).toLocaleDateString('fr-FR') : 'Non renseigné'}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Retour</p>
                     <p className="font-medium text-gray-900 mt-1">
-                      {new Date(demande.dateRetour).toLocaleDateString('fr-FR')}
+                      {demande.dateRetour ? new Date(demande.dateRetour).toLocaleDateString('fr-FR') : 'Non renseigné'}
                     </p>
                   </div>
                   <div>
@@ -182,17 +185,17 @@ export default function DemandePage() {
                     <div>
                       <p className="text-green-700">Véhicule</p>
                       <p className="font-medium text-green-900 mt-1">
-                        {demande.vehiculeAssigne.marque} {demande.vehiculeAssigne.modele}
+                        {demande.vehiculeAssigne?.marque} {demande.vehiculeAssigne?.modele}
                       </p>
                       <p className="text-xs text-green-700">
-                        {demande.vehiculeAssigne.immatriculation}
+                        {demande.vehiculeAssigne?.immatriculation}
                       </p>
                     </div>
                     {demande.chauffeurAssigne && (
                       <div>
                         <p className="text-green-700">Chauffeur</p>
                         <p className="font-medium text-green-900 mt-1">
-                          {demande.chauffeurAssigne.nomComplet}
+                          {demande.chauffeurAssigne?.nomComplet || 'Non spécifié'}
                         </p>
                       </div>
                     )}

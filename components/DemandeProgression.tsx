@@ -17,6 +17,8 @@ export function DemandeProgression({ demande }: DemandeProgressionProps) {
   ];
 
   const getStepStatus = (step: string) => {
+    if (!demande) return 'upcoming';
+
     switch (step) {
       case 'chef':
         if (demande.validationChef) {
@@ -92,7 +94,8 @@ export function DemandeProgression({ demande }: DemandeProgressionProps) {
       {/* Status Details */}
       <div className="mt-4 p-4 bg-gray-50 rounded-lg">
         <p className="text-sm text-gray-600">
-          <span className="font-medium">Statut actuel:</span> {demande.status.replace(/_/g, ' ')}
+          {/* FIX SÉCURISÉ : On ajoute "|| ''" pour éviter de lire .replace sur du vide */}
+          <span className="font-medium">Statut actuel:</span> {(demande?.status || '').replace(/_/g, ' ')}
         </p>
       </div>
     </div>

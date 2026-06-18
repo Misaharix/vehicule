@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { DemandeCard } from '@/components/DemandeCard';
 import Link from 'next/link';
 import demandeService from '@/services/demandeService';
-import { Demande, DemandeStatus } from '@/types';
+import { Demande } from '@/types';
 
 export default function DemandesPage() {
   const router = useRouter();
@@ -40,15 +40,23 @@ export default function DemandesPage() {
         page,
         page_size: 12,
       });
-      setDemandes(response.results);
+      
+      // Ajustement selon le format reçu (paginé avec .results ou brut en tableau)
+      if (response && response.results) {
+        setDemandes(Array.isArray(response.results) ? response.results : []);
+      } else {
+        setDemandes(Array.isArray(response) ? response : []);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
       setError(errorMessage);
+      setDemandes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // RE-AJOUTÉ : La fonction handleCancel manquante
   const handleCancel = async (id: number) => {
     if (confirm('Êtes-vous sûr de vouloir annuler cette demande?')) {
       try {
