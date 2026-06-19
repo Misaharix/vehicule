@@ -7,12 +7,21 @@ import { Navbar } from '@/components/Navbar';
 import { Sidebar } from '@/components/Sidebar';
 import { Modal } from '@/components/Modal';
 import chauffeurService from '@/services/chauffeurService';
+// Assure-toi de créer ou d'importer ce service pour récupérer les financements
+import financementService from '@/services/financementService'; 
 import { Chauffeur } from '@/types';
+
+// Interface locale pour typer les options de financement
+interface Financement {
+  id: number;
+  nom: string;
+}
 
 export default function ChauffeurAdminPage() {
   const router = useRouter();
   const { isAdminAuthenticated, isLoading: authLoading } = useAuth();
   const [chauffeurs, setChauffeurs] = useState<Chauffeur[]>([]);
+  const [financements, setFinancements] = useState<Financement[]>([]); // État pour stocker la liste déroulante
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -22,6 +31,7 @@ export default function ChauffeurAdminPage() {
     numeroLicence: '',
     numeroTelephone: '',
     disponible: true,
+    financement_id: '', // Nouvelle clé ajoutée au formulaire
   });
 
   useEffect(() => {
@@ -32,18 +42,25 @@ export default function ChauffeurAdminPage() {
 
   useEffect(() => {
     if (isAdminAuthenticated) {
-      loadChauffeurs();
+      loadInitialData();
     }
   }, [isAdminAuthenticated]);
 
-  const loadChauffeurs = async () => {
+  // Chargement couplé des chauffeurs et de la liste des financements
+  const loadInitialData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await chauffeurService.getAll({ page_size: 100 });
-      setChauffeurs(response.results);
+      
+      const [chauffeurResponse, financementResponse] = await Promise.all([
+        chauffeurService.getAll({ page_size: 100 }),
+        financementService.getAll() // Appel API pour charger les financements
+      ]);
+
+      setChauffeurs(chauffeurResponse.results);
+      setFinancements(financementResponse || []);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des données';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -58,6 +75,8 @@ export default function ChauffeurAdminPage() {
         numeroLicence: chauffeur.numeroLicence,
         numeroTelephone: chauffeur.numeroTelephone,
         disponible: chauffeur.disponible,
+        // On récupère l'ID si le financement imbriqué existe
+        financement_id: chauffeur.financement ? String(chauffeur.financement.id) : '', 
       });
     } else {
       setEditingId(null);
@@ -66,6 +85,7 @@ export default function ChauffeurAdminPage() {
         numeroLicence: '',
         numeroTelephone: '',
         disponible: true,
+        financement_id: '',
       });
     }
     setShowModal(true);
@@ -75,13 +95,20 @@ export default function ChauffeurAdminPage() {
     e.preventDefault();
     try {
       setError(null);
+      
+      // On prépare le payload en transformant l'ID en entier (ou null si vide)
+      const payload = {
+        ...formData,
+        financement_id: formData.financement_id ? parseInt(formData.financement_id, 10) : null
+      };
+
       if (editingId) {
-        await chauffeurService.update(editingId, formData);
+        await chauffeurService.update(editingId, payload);
       } else {
-        await chauffeurService.create(formData);
+        await chauffeurService.create(payload);
       }
       setShowModal(false);
-      loadChauffeurs();
+      loadInitialData(); // Recharger la table globale
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur';
       setError(errorMessage);
@@ -92,7 +119,7 @@ export default function ChauffeurAdminPage() {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce chauffeur?')) {
       try {
         await chauffeurService.delete(id);
-        loadChauffeurs();
+        loadInitialData();
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Erreur';
         setError(errorMessage);
@@ -159,7 +186,7 @@ export default function ChauffeurAdminPage() {
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nom</th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden sm:table-cell">Prenoms</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden sm:table-cell">Financement</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden md:table-cell">Téléphone</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Dispo.</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
@@ -169,7 +196,10 @@ export default function ChauffeurAdminPage() {
                       {chauffeurs.map((chauffeur) => (
                         <tr key={chauffeur.id} className="hover:bg-gray-50 transition">
                           <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-900 truncate">{chauffeur.nom}</td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden sm:table-cell truncate">{chauffeur.prenom}</td>
+                          {/* Ajout de la colonne Financement dans le tableau */}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden sm:table-cell truncate">
+                            {chauffeur.financement ? chauffeur.financement.nom : 'Aucun'}
+                          </td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden md:table-cell truncate">{chauffeur.telephone}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <span
@@ -230,7 +260,7 @@ export default function ChauffeurAdminPage() {
           </>
         }
       >
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
             <input
@@ -258,6 +288,24 @@ export default function ChauffeurAdminPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
             />
           </div>
+
+          {/* --- AJOUT DE LA LISTE DÉROULANTE DES FINANCEMENTS --- */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type de Financement</label>
+            <select
+              value={formData.financement_id}
+              onChange={(e) => setFormData({ ...formData, financement_id: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#1a5c38] text-sm"
+            >
+              <option value="">-- Sélectionner un financement --</option>
+              {financements.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <input

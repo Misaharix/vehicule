@@ -98,6 +98,7 @@ export enum ValidationStatut {
  * Demandeur - Request originator
  */
 export interface Demandeur {
+  nomComplet: string;
   role: string;
   service: string;
   telephone: string;
@@ -133,6 +134,10 @@ export interface Vehicule {
  * Chauffeur - Driver
  */
 export interface Chauffeur {
+  financement: any;
+  numeroTelephone: string;
+  numeroLicence: string;
+  nomComplet: string;
   id: number;
   nom: string;
   prenom : string;
