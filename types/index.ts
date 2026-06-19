@@ -98,6 +98,12 @@ export enum ValidationStatut {
  * Demandeur - Request originator
  */
 export interface Demandeur {
+  role: string;
+  service: string;
+  telephone: string;
+  username: string;
+  last_name: string;
+  first_name: string;
   id: number;
   nom: string;
   email: string;
