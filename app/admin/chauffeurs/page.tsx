@@ -18,9 +18,10 @@ export default function ChauffeurAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
-    nomComplet: '',
-    numeroLicence: '',
-    numeroTelephone: '',
+    nom: '',
+    prenom: '',      // Requis par ton CreerChauffeurSerializer
+    telephone: '',   // Requis par ton CreerChauffeurSerializer
+    email: '',       // Requis par ton CreerChauffeurSerializer
     disponible: true,
   });
 
@@ -54,17 +55,19 @@ export default function ChauffeurAdminPage() {
     if (chauffeur) {
       setEditingId(chauffeur.id);
       setFormData({
-        nomComplet: chauffeur.nomComplet,
-        numeroLicence: chauffeur.numeroLicence,
-        numeroTelephone: chauffeur.numeroTelephone,
+        nom: chauffeur.nom,
+        prenom: chauffeur.prenom || '',
+        telephone: chauffeur.telephone,
+        email: chauffeur.email || '',
         disponible: chauffeur.disponible,
       });
     } else {
       setEditingId(null);
       setFormData({
-        nomComplet: '',
-        numeroLicence: '',
-        numeroTelephone: '',
+        nom: '',
+        prenom: '',
+        telephone: '',
+        email: '',
         disponible: true,
       });
     }
@@ -232,20 +235,20 @@ export default function ChauffeurAdminPage() {
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
             <input
               type="text"
-              value={formData.nomComplet}
-              onChange={(e) => setFormData({ ...formData, nomComplet: e.target.value })}
+              value={formData.nom}
+              onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Numéro de permis</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
             <input
               type="text"
-              value={formData.numeroLicence}
-              onChange={(e) => setFormData({ ...formData, numeroLicence: e.target.value })}
+              value={formData.prenom}
+              onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
             />
           </div>
@@ -253,8 +256,17 @@ export default function ChauffeurAdminPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
             <input
               type="tel"
-              value={formData.numeroTelephone}
-              onChange={(e) => setFormData({ ...formData, numeroTelephone: e.target.value })}
+              value={formData.telephone}
+              onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
             />
           </div>

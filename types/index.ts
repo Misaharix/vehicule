@@ -133,6 +133,7 @@ export interface Vehicule {
  * Chauffeur - Driver
  */
 export interface Chauffeur {
+  email: string;
   id: number;
   nom: string;
   prenom : string;
