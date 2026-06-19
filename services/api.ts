@@ -1,38 +1,47 @@
-import axios from 'axios';
+import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api',
-  withCredentials: true,
-});
-
-// Intercepteur : Ajoute automatiquement le Token JWT à chaque requête HTTP
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        // Injection du token au format Bearer attendu par Django JWT
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
+  headers: {
+    'Content-Type': 'application/json',
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  withCredentials: true,
+})
 
-// Gestionnaire d'erreurs adapté à Django Rest Framework (DRF)
+// Ajouter le token JWT à chaque requête
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  }
+  return config
+})
+
+// Si 401 → essayer de rafraîchir le token
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const adminToken = localStorage.getItem('admin_access_token')
+    const userToken  = localStorage.getItem('access_token')
+    const token      = adminToken || userToken
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  }
+  return config
+})
+
 export const handleApiError = (error: any): string => {
   if (error.response) {
-    // DRF envoie ses messages d'erreur dans le champ 'detail'
-    return (
-      error.response.data?.detail || 
-      error.response.data?.message || 
-      `Erreur ${error.response.status}`
-    );
+    const data = error.response.data
+    if (typeof data === 'string') return data
+    if (data?.error) return data.error
+    if (data?.detail) return data.detail
+    return `Erreur ${error.response.status}`
   }
-  return error.message || 'Erreur réseau inconnue';
-};
+  return error.message || 'Erreur réseau'
+}
 
-export default api;
+export default api

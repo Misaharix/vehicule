@@ -99,7 +99,7 @@ export enum ValidationStatut {
  */
 export interface Demandeur {
   id: number;
-  nomComplet: string;
+  nom: string;
   email: string;
   numeroTelephone: string;
   departement: string;
@@ -128,9 +128,9 @@ export interface Vehicule {
  */
 export interface Chauffeur {
   id: number;
-  nomComplet: string;
-  numeroLicence: string;
-  numeroTelephone: string;
+  nom: string;
+  prenom : string;
+  telephone: string;
   disponible: boolean;
   createdAt: string;
   updatedAt: string;

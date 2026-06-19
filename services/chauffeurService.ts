@@ -1,45 +1,59 @@
 import api, { handleApiError } from './api';
-import { User, Admin, AuthResponse, AdminAuthResponse } from '@/types';
+import { Chauffeur, PaginatedResponse } from '@/types';
 
-class AuthService {
-  getAll(arg0: { page_size: number; }): any {
-    throw new Error('Method not implemented.');
-  }
-  async getCurrentUser(): Promise<User | null> {
+class ChauffeurService {
+  async getAll(params?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+  }): Promise<PaginatedResponse<Chauffeur>> {
     try {
-      const response = await api.get<AuthResponse>('/auth/me/');
-      return response.data.user || null;
-    } catch (error: any) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        return null;
+      const response = await api.get('/admin/chauffeurs/', { params });
+      const data = response.data;
+      // Adapter si le backend retourne un tableau simple
+      if (Array.isArray(data)) {
+        return { results: data, count: data.length };
       }
-      console.error('Erreur getCurrentUser:', handleApiError(error));
-      return null;
-    }
-  }
-
-  async getCurrentAdmin(): Promise<Admin | null> {
-    try {
-      const response = await api.get<AdminAuthResponse>('/auth/admin/me/');
-      return response.data.admin || null;
-    } catch (error: any) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        return null;
-      }
-      console.error('Erreur getCurrentAdmin:', handleApiError(error));
-      return null;
-    }
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await api.post('/auth/logout/');
+      return data;
     } catch (error) {
-      console.error('Logout error:', handleApiError(error));
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  async getById(id: number): Promise<Chauffeur> {
+    try {
+      const response = await api.get<Chauffeur>(`/admin/chauffeurs/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  async create(data: Partial<Chauffeur>): Promise<Chauffeur> {
+    try {
+      const response = await api.post<Chauffeur>('/admin/chauffeurs/', data);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  async update(id: number, data: Partial<Chauffeur>): Promise<Chauffeur> {
+    try {
+      const response = await api.put<Chauffeur>(`/admin/chauffeurs/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  async delete(id: number): Promise<void> {
+    try {
+      await api.delete(`/admin/chauffeurs/${id}/`);
+    } catch (error) {
+      throw new Error(handleApiError(error));
     }
   }
 }
 
-// Instance unique exportée
-const authService = new AuthService();
-export default authService;
+export default new ChauffeurService();

@@ -18,7 +18,7 @@ export default function DemandeurAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
-    nomComplet: '',
+    nom: '',
     email: '',
     numeroTelephone: '',
     departement: '',
@@ -42,10 +42,17 @@ export default function DemandeurAdminPage() {
       setIsLoading(true);
       setError(null);
       const response = await demandeurService.getAll({ page_size: 100 });
-      setDemandeurs(response.results);
+      
+      // FIX SÉCURISÉ : Gestion flexible du format de l'API (paginé ou brut)
+      if (response && response.results) {
+        setDemandeurs(Array.isArray(response.results) ? response.results : []);
+      } else {
+        setDemandeurs(Array.isArray(response) ? response : []);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement';
       setError(errorMessage);
+      setDemandeurs([]); // Sécurité : évite le crash en cas d'erreur de requête
     } finally {
       setIsLoading(false);
     }
@@ -55,7 +62,7 @@ export default function DemandeurAdminPage() {
     if (demandeur) {
       setEditingId(demandeur.id);
       setFormData({
-        nomComplet: demandeur.nomComplet,
+        nom: demandeur.nomComplet,
         email: demandeur.email,
         numeroTelephone: demandeur.numeroTelephone,
         departement: demandeur.departement,
@@ -64,7 +71,7 @@ export default function DemandeurAdminPage() {
     } else {
       setEditingId(null);
       setFormData({
-        nomComplet: '',
+        nom: '',
         email: '',
         numeroTelephone: '',
         departement: '',
@@ -152,7 +159,7 @@ export default function DemandeurAdminPage() {
           {/* Table */}
           {!isLoading && (
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {demandeurs.length === 0 ? (
+              {(demandeurs || []).length === 0 ? (
                 <div className="p-6 sm:p-8 text-center text-gray-600 text-sm sm:text-base">
                   Aucun demandeur trouvé
                 </div>
@@ -172,9 +179,9 @@ export default function DemandeurAdminPage() {
                     <tbody className="divide-y divide-gray-200">
                       {demandeurs.map((demandeur) => (
                         <tr key={demandeur.id} className="hover:bg-gray-50 transition">
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-900 truncate">{demandeur.nomComplet}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-900 truncate">{demandeur.nom}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden sm:table-cell truncate">{demandeur.email}</td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden md:table-cell truncate">{demandeur.numeroTelephone}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden md:table-cell truncate">{demandeur.telephone}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden lg:table-cell truncate">{demandeur.departement}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden lg:table-cell truncate">{demandeur.poste}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4 space-x-1 sm:space-x-2">
@@ -227,11 +234,11 @@ export default function DemandeurAdminPage() {
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
             <input
               type="text"
-              value={formData.nomComplet}
-              onChange={(e) => setFormData({ ...formData, nomComplet: e.target.value })}
+              value={formData.nom}
+              onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1a5c38]"
             />
           </div>

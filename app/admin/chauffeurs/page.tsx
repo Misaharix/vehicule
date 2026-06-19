@@ -159,7 +159,7 @@ export default function ChauffeurAdminPage() {
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nom</th>
-                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden sm:table-cell">Permis</th>
+                        <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden sm:table-cell">Prenoms</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase hidden md:table-cell">Téléphone</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Dispo.</th>
                         <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
@@ -168,9 +168,9 @@ export default function ChauffeurAdminPage() {
                     <tbody className="divide-y divide-gray-200">
                       {chauffeurs.map((chauffeur) => (
                         <tr key={chauffeur.id} className="hover:bg-gray-50 transition">
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-900 truncate">{chauffeur.nomComplet}</td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden sm:table-cell truncate">{chauffeur.numeroLicence}</td>
-                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden md:table-cell truncate">{chauffeur.numeroTelephone}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-900 truncate">{chauffeur.nom}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden sm:table-cell truncate">{chauffeur.prenom}</td>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-gray-600 hidden md:table-cell truncate">{chauffeur.telephone}</td>
                           <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <span
                               className={`px-2 py-1 rounded text-xs font-medium ${

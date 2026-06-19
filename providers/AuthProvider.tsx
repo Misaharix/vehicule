@@ -5,21 +5,16 @@ import { User, Admin, UserRole } from '@/types';
 import authService from '@/services/authService';
 
 interface AuthContextType {
-  // User auth
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-
-  // Admin auth
   admin: Admin | null;
   isAdminAuthenticated: boolean;
   adminLogin: (email: string, password: string) => Promise<void>;
   adminLogout: () => Promise<void>;
-
-  // Helpers
   userRole: UserRole | null;
   hasRole: (role: UserRole) => boolean;
 }
@@ -32,29 +27,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         setIsLoading(true);
-        
-        // Try to get current user
-        const currentUser = await authService.getCurrentUser();
+
+        // 1. Vérifier admin d'abord (localStorage, pas d'appel API)
+        const adminLogged = localStorage.getItem('admin_logged')
+        const adminData = localStorage.getItem('admin_data')
+
+        if (adminLogged && adminData) {
+          // Admin connecté → restaurer depuis localStorage sans appel API
+          setAdmin(JSON.parse(adminData))
+          setUser(null)
+          return
+        }
+
+        // 2. Vérifier token JWT utilisateur
+        const token = localStorage.getItem('access_token')
+        if (!token) {
+          // Pas de token → pas connecté
+          setUser(null)
+          setAdmin(null)
+          return
+        }
+
+        // 3. Token présent → vérifier s'il est valide
+        const currentUser = await authService.getCurrentUser()
         if (currentUser) {
-          setUser(currentUser);
-          setAdmin(null);
+          setUser(currentUser)
+          setAdmin(null)
         } else {
-          // Try to get current admin
-          const currentAdmin = await authService.getCurrentAdmin();
-          if (currentAdmin) {
-            setAdmin(currentAdmin);
-            setUser(null);
-          }
+          // Token invalide → nettoyer
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user_data')
+          setUser(null)
+          setAdmin(null)
         }
       } catch (err) {
-        console.error('[v0] Auth initialization error:', err);
+        console.error('Auth init error:', err)
+        // En cas d'erreur → nettoyer tout
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user_data')
+        setUser(null)
+        setAdmin(null)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     };
 
@@ -68,10 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = await authService.login(email, password);
       setUser(userData);
       setAdmin(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      setError(errorMessage);
-      throw err;
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Erreur de connexion'
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -81,11 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       await authService.logout();
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
       setUser(null);
       setAdmin(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Logout failed';
-      setError(errorMessage);
     }
   };
 
@@ -96,10 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const adminData = await authService.adminLogin(email, password);
       setAdmin(adminData);
       setUser(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Admin login failed';
-      setError(errorMessage);
-      throw err;
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message || 'Erreur connexion admin'
+      setError(msg);
+      throw new Error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -109,47 +129,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       await authService.adminLogout();
+    } catch (err) {
+      console.error('Admin logout error:', err)
+    } finally {
       setUser(null);
       setAdmin(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Admin logout failed';
-      setError(errorMessage);
     }
   };
 
   const isAuthenticated = !!user;
   const isAdminAuthenticated = !!admin;
   const userRole = user?.role || null;
+  const hasRole = (role: UserRole) => userRole === role;
 
-  const hasRole = (role: UserRole): boolean => {
-    return userRole === role;
-  };
-
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    error,
-    login,
-    logout,
-    admin,
-    isAdminAuthenticated,
-    adminLogin,
-    adminLogout,
-    userRole,
-    hasRole,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user, isAuthenticated, isLoading, error,
+      login, logout,
+      admin, isAdminAuthenticated,
+      adminLogin, adminLogout,
+      userRole, hasRole,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-/**
- * Hook to use authentication context
- */
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 }
