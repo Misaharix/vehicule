@@ -1,94 +1,20 @@
-import api, { handleApiError } from './api';
-import { Demande, PaginatedResponse } from '@/types';
+import api from './api'
 
-/**
- * Demande (Vehicle Request) Service
- * Handles CRUD operations for vehicle requests
- */
-class DemandeService {
-  /**
-   * Create a new vehicle request
-   */
-  async create(data: Partial<Demande>): Promise<Demande> {
-    try {
-      const response = await api.post<Demande>('/demandes/', data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+const demandeService = {
+  getMesDemandes: async () => (await api.get('/demandes/')).data,
 
-  /**
-   * Get all requests for current user (demandeur, chef validating, etc.)
-   */
-  async getAll(params?: {
-    status?: string;
-    page?: number;
-    page_size?: number;
-    search?: string;
-  }): Promise<PaginatedResponse<Demande>> {
-    try {
-      const response = await api.get<PaginatedResponse<Demande>>('/demandes/', {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  getDemandeById: async (id: number) => (await api.get(`/demandes/${id}/`)).data,
 
-  /**
-   * Get a single request by ID
-   */
-  async getById(id: number): Promise<Demande> {
-    try {
-      const response = await api.get<Demande>(`/demandes/${id}/`);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  creerDemande: async (data: {
+    motif: string
+    destination: string
+    description?: string
+    date_depart: string
+    date_retour: string
+    nombre_passagers: number
+  }) => (await api.post('/demandes/', data)).data,
 
-  /**
-   * Update a request (typically only owner/creator can update)
-   */
-  async update(id: number, data: Partial<Demande>): Promise<Demande> {
-    try {
-      const response = await api.put<Demande>(`/demandes/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Cancel a request (change status to ANNULEE)
-   */
-  async cancel(id: number): Promise<Demande> {
-    try {
-      const response = await api.post<Demande>(`/demandes/${id}/cancel/`, {});
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
-
-  /**
-   * Get pending requests for current validator role
-   */
-  async getPending(params?: {
-    page?: number;
-    page_size?: number;
-  }): Promise<PaginatedResponse<Demande>> {
-    try {
-      const response = await api.get<PaginatedResponse<Demande>>('/demandes/pending/', {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  annulerDemande: async (id: number) => { await api.delete(`/demandes/${id}/`) },
 }
 
-export default new DemandeService();
+export default demandeService

@@ -1,103 +1,45 @@
-import { Demande, DemandeStatus } from '@/types';
+import { EtapeDemande, StatutDemande } from '@/types'
 
-interface DemandeProgressionProps {
-  demande: Demande;
+interface Props {
+  etape: EtapeDemande
+  statut: StatutDemande
 }
 
-/**
- * Visual workflow progression showing the 4 steps of validation
- * Chef → Logistique → Directeur → Terminé
- */
-export function DemandeProgression({ demande }: DemandeProgressionProps) {
-  const steps = [
-    { label: 'Chef', step: 'chef' },
-    { label: 'Logistique', step: 'logistique' },
-    { label: 'Directeur', step: 'directeur' },
-    { label: 'Terminé', step: 'termine' },
-  ];
+const ETAPES = [
+  { key: 'chef', label: 'Chef' },
+  { key: 'logistique', label: 'Logistique' },
+  { key: 'directeur', label: 'Directeur' },
+  { key: 'termine', label: 'Terminé' },
+]
 
-  const getStepStatus = (step: string) => {
-    if (!demande) return 'upcoming';
-
-    switch (step) {
-      case 'chef':
-        if (demande.validationChef) {
-          return demande.validationChef.statut === 'approuvee' ? 'completed' : 'rejected';
-        }
-        return demande.status === DemandeStatus.EN_ATTENTE_CHEF ? 'pending' : 'upcoming';
-
-      case 'logistique':
-        if (demande.validationLogistique) {
-          return demande.validationLogistique.statut === 'approuvee' ? 'completed' : 'rejected';
-        }
-        return demande.status === DemandeStatus.EN_ATTENTE_LOGISTIQUE ? 'pending' : 'upcoming';
-
-      case 'directeur':
-        if (demande.validationDirecteur) {
-          return demande.validationDirecteur.statut === 'approuvee' ? 'completed' : 'rejected';
-        }
-        return demande.status === DemandeStatus.EN_ATTENTE_DIRECTEUR ? 'pending' : 'upcoming';
-
-      case 'termine':
-        return demande.status === DemandeStatus.APPROUVEE ? 'completed' : 'upcoming';
-
-      default:
-        return 'upcoming';
-    }
-  };
+export function DemandeProgression({ etape, statut }: Props) {
+  const ordre = ETAPES.map(e => e.key)
+  const etapeIndex = ordre.indexOf(etape)
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const status = getStepStatus(step.step);
-          const isLast = index === steps.length - 1;
+    <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+      {ETAPES.map((e, i) => {
+        const done = statut === 'approuvee' || i < etapeIndex
+        const active = e.key === etape && statut === 'en_attente'
+        const rejected = statut === 'rejetee' && e.key === etape
 
-          return (
-            <div key={step.step} className="flex items-center flex-1">
-              {/* Step Circle */}
-              <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-sm ${
-                  status === 'completed'
-                    ? 'bg-[#3aaa35] text-white'
-                    : status === 'pending'
-                      ? 'bg-yellow-400 text-white'
-                      : status === 'rejected'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {status === 'completed' ? '✓' : status === 'rejected' ? '✗' : index + 1}
-              </div>
-
-              {/* Step Label */}
-              <div className="ml-2">
-                <p className="text-sm font-medium text-gray-900">{step.label}</p>
-              </div>
-
-              {/* Connector Line */}
-              {!isLast && (
-                <div
-                  className={`flex-1 h-1 ml-2 ${
-                    getStepStatus(steps[index + 1].step) === 'completed' ||
-                    getStepStatus(steps[index + 1].step) === 'rejected'
-                      ? 'bg-[#3aaa35]'
-                      : 'bg-gray-300'
-                  }`}
-                />
-              )}
+        return (
+          <div key={e.key} className="flex items-center gap-1 sm:gap-2">
+            <div className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
+              rejected ? 'bg-red-100 text-red-700'
+              : done ? 'bg-[#1a5c38] text-white'
+              : active ? 'bg-[#c8860a] text-white'
+              : 'bg-gray-100 text-gray-500'
+            }`}>
+              {done && !active ? '✓' : rejected ? '✗' : i + 1}
+              <span className="hidden sm:inline">{e.label}</span>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Status Details */}
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600">
-          {/* FIX SÉCURISÉ : On ajoute "|| ''" pour éviter de lire .replace sur du vide */}
-          <span className="font-medium">Statut actuel:</span> {(demande?.status || '').replace(/_/g, ' ')}
-        </p>
-      </div>
+            {i < ETAPES.length - 1 && (
+              <div className={`h-px w-4 sm:w-6 ${done ? 'bg-[#1a5c38]' : 'bg-gray-200'}`} />
+            )}
+          </div>
+        )
+      })}
     </div>
-  );
+  )
 }

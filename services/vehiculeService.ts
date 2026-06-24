@@ -1,76 +1,31 @@
-import api, { handleApiError } from './api';
-import { Vehicule, PaginatedResponse } from '@/types';
+import api from './api'
 
-/**
- * Vehicule Service - Admin operations
- * CRUD operations for vehicle management
- */
-class VehiculeService {
-  /**
-   * Get all vehicles
-   */
-  async getAll(params?: {
-    page?: number;
-    page_size?: number;
-    disponible?: boolean;
-    search?: string;
-  }): Promise<PaginatedResponse<Vehicule>> {
-    try {
-      const response = await api.get<PaginatedResponse<Vehicule>>('/vehicules/', {
-        params,
-      });
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+const vehiculeService = {
+  // Liste complète
+  getAll: async () => {
+    const res = await api.get('/vehicules/')
+    return Array.isArray(res.data) ? res.data : res.data.results ?? []
+  },
 
-  /**
-   * Get a single vehicle
-   */
-  async getById(id: number): Promise<Vehicule> {
-    try {
-      const response = await api.get<Vehicule>(`/vehicules/${id}/`);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  // Véhicules disponibles
+  getVehiculesDisponibles: async (date_depart?: string, date_retour?: string) => {
+    const params = date_depart && date_retour
+      ? `?date_depart=${date_depart}&date_retour=${date_retour}`
+      : ''
+    return (await api.get(`/vehicules/disponibles/${params}`)).data
+  },
 
-  /**
-   * Create a new vehicle
-   */
-  async create(data: Partial<Vehicule>): Promise<Vehicule> {
-    try {
-      const response = await api.post<Vehicule>('/vehicules/', data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  // Missions en cours
+  getMissionsEnCours: async () => (await api.get('/missions/en-cours/')).data,
 
-  /**
-   * Update a vehicle
-   */
-  async update(id: number, data: Partial<Vehicule>): Promise<Vehicule> {
-    try {
-      const response = await api.put<Vehicule>(`/vehicules/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  // CRUD
+  creer: async (data: any) => (await api.post('/vehicules/', data)).data,
 
-  /**
-   * Delete a vehicle
-   */
-  async delete(id: number): Promise<void> {
-    try {
-      await api.delete(`/vehicules/${id}/`);
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  modifier: async (id: number, data: any) =>
+    (await api.put(`/vehicules/${id}/`, data)).data,
+
+  desactiver: async (id: number) =>
+    (await api.delete(`/vehicules/${id}/`)).data,
 }
 
-export default new VehiculeService();
+export default vehiculeService

@@ -1,198 +1,97 @@
-/**
- * User & Admin types
- */
+export type Role = 'Demandeur' | 'Chef' | 'Logistique' | 'Directeur'
+export type StatutDemande = 'en_attente' | 'approuvee' | 'rejetee'
+export type EtapeDemande = 'chef' | 'logistique' | 'directeur' | 'termine'
+export type MotifDemande = 'mission' | 'transport' | 'deplacement' | 'autre'
+
+export enum UserRole {
+  DEMANDEUR = 'Demandeur',
+  CHEF = 'Chef',
+  LOGISTIQUE = 'Logistique',
+  DIRECTEUR = 'Directeur',
+}
+
 export interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  departement?: string;
-  createdAt: string;
-  updatedAt: string;
+  id: number
+  username: string
+  first_name: string
+  last_name: string
+  email: string
+  role: Role
+  poste: string
+  service: string
+  telephone: string
+  chef_direct: number | null
+  chef_direct_nom: string | null
+  is_active: boolean
 }
 
 export interface Admin {
-  id: number;
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  createdAt: string;
-  updatedAt: string;
+  id: number
+  username: string
+  email: string
+  nom: string
+  prenom: string
+  is_active: boolean
 }
 
-/**
- * User Roles
- */
-export enum UserRole {
-  DEMANDEUR = 'demandeur',
-  CHEF = 'chef',
-  LOGISTIQUE = 'logistique',
-  DIRECTEUR = 'directeur',
-  ADMIN = 'admin',
-}
-
-/**
- * Demande (Vehicle Request) - Main workflow entity
- */
-export interface Demande {
-  id: number;
-  demandeur: Demandeur;
-  motif: string;
-  dateDepart: string;
-  dateRetour: string;
-  destination: string;
-  nombrePersonnes: number;
-  vehiculeRequete?: string; // Specific vehicle request by demandeur
-  status: DemandeStatus;
-  validationChef?: Validation;
-  validationLogistique?: Validation;
-  validationDirecteur?: Validation;
-  vehiculeAssigne?: Vehicule;
-  chauffeurAssigne?: Chauffeur;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export enum DemandeStatus {
-  EN_ATTENTE_CHEF = 'en_attente_chef',
-  REJETEE_CHEF = 'rejetee_chef',
-  EN_ATTENTE_LOGISTIQUE = 'en_attente_logistique',
-  REJETEE_LOGISTIQUE = 'rejetee_logistique',
-  EN_ATTENTE_DIRECTEUR = 'en_attente_directeur',
-  REJETEE_DIRECTEUR = 'rejetee_directeur',
-  APPROUVEE = 'approuvee',
-  ANNULEE = 'annulee',
-}
-
-/**
- * Validation - Step in workflow
- */
-export interface Validation {
-  id: number;
-  demande: number;
-  validateur: User;
-  step: ValidationStep;
-  statut: ValidationStatut;
-  comments?: string;
-  vehicule?: Vehicule;
-  chauffeur?: Chauffeur;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export enum ValidationStep {
-  CHEF = 'chef',
-  LOGISTIQUE = 'logistique',
-  DIRECTEUR = 'directeur',
-}
-
-export enum ValidationStatut {
-  APPROUVEE = 'approuvee',
-  REJETEE = 'rejetee',
-  EN_ATTENTE = 'en_attente',
-}
-
-/**
- * Demandeur - Request originator
- */
-export interface Demandeur {
-  role: string;
-  service: string;
-  telephone: string;
-  username: string;
-  last_name: string;
-  first_name: string;
-  id: number;
-  nom: string;
-  email: string;
-  numeroTelephone: string;
-  departement: string;
-  poste: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Vehicule - Vehicle in fleet
- */
 export interface Vehicule {
-  id: number;
-  marque: string;
-  modele: string;
-  immatriculation: string;
-  nombrePlaces: number;
-  carburant: string;
-  disponible: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: number
+  immatriculation: string
+  marque: string
+  modele: string
+  disponible: boolean
 }
 
-/**
- * Chauffeur - Driver
- */
 export interface Chauffeur {
-  email: string;
-  id: number;
-  nom: string;
-  prenom : string;
-  telephone: string;
-  disponible: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: number
+  nom: string
+  prenom: string
+  telephone: string
+  email: string
+  disponible: boolean
+  date_creation: string
 }
 
-/**
- * API Response wrappers
- */
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  errors?: Record<string, string[]>;
+export interface Financement {
+  id: number
+  nom: string
 }
 
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
+export interface ValidationDemande {
+  id: number
+  demande: number
+  validateur: number
+  validateur_nom: string
+  etape: string
+  etape_display: string
+  decision: 'approuve' | 'rejete'
+  decision_display: string
+  commentaire: string
+  date_validation: string
 }
 
-/**
- * Auth response
- */
-export interface AuthResponse {
-  user: User;
-  message: string;
+export interface DemandeVehicule {
+  id: number
+  demandeur: number
+  demandeur_nom: string
+  demandeur_poste: string
+  demandeur_email: string
+  chef_direct_nom: string | null
+  vehicule: number | null
+  vehicule_info: Vehicule | null
+  chauffeur: number | null
+  chauffeur_info: Chauffeur | null
+  motif: MotifDemande
+  destination: string
+  description: string
+  date_depart: string
+  date_retour: string
+  nombre_passagers: number
+  statut: StatutDemande
+  statut_display: string
+  etape_validation: EtapeDemande
+  etape_display: string
+  validations: ValidationDemande[]
+  date_creation: string
+  date_modification: string
 }
-
-export interface AdminAuthResponse {
-  admin: Admin;
-  message: string;
-}
-
-/**
- * Helper types for UI
- */
-export interface DashboardStats {
-  pendingRequests: number;
-  approvedRequests: number;
-  rejectedRequests: number;
-  totalRequests: number;
-}
-
-export interface ValidationWorkflow {
-  step: ValidationStep;
-  status: 'completed' | 'pending' | 'rejected';
-  validatedBy?: User;
-  validatedAt?: string;
-  comment?: string;
-}
-
-export type DemandeWithWorkflow = Demande & {
-  workflow: ValidationWorkflow[];
-  currentStep: ValidationStep | null;
-  canValidate: boolean;
-};

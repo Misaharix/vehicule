@@ -1,59 +1,27 @@
-import api, { handleApiError } from './api';
-import { Chauffeur, PaginatedResponse } from '@/types';
+import api from './api'
 
-class ChauffeurService {
-  async getAll(params?: {
-    page?: number;
-    page_size?: number;
-    search?: string;
-  }): Promise<PaginatedResponse<Chauffeur>> {
-    try {
-      const response = await api.get('/admin/chauffeurs/', { params });
-      const data = response.data;
-      // Adapter si le backend retourne un tableau simple
-      if (Array.isArray(data)) {
-        return { results: data, count: data.length };
-      }
-      return data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+const chauffeurService = {
+  // Liste complète
+  getAll: async () => {
+    const res = await api.get('/chauffeurs/')
+    return Array.isArray(res.data) ? res.data : res.data.results ?? []
+  },
 
-  async getById(id: number): Promise<Chauffeur> {
-    try {
-      const response = await api.get<Chauffeur>(`/admin/chauffeurs/${id}/`);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  // Chauffeurs disponibles
+  getChauffeursDisponibles: async () => {
+    const res = await api.get('/chauffeurs/')
+    const list = Array.isArray(res.data) ? res.data : res.data.results ?? []
+    return list.filter((c: any) => c.disponible)
+  },
 
-  async create(data: Partial<Chauffeur>): Promise<Chauffeur> {
-    try {
-      const response = await api.post<Chauffeur>('/admin/chauffeurs/', data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  // CRUD
+  creer: async (data: any) => (await api.post('/chauffeurs/', data)).data,
 
-  async update(id: number, data: Partial<Chauffeur>): Promise<Chauffeur> {
-    try {
-      const response = await api.put<Chauffeur>(`/admin/chauffeurs/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  modifier: async (id: number, data: any) =>
+    (await api.put(`/chauffeurs/${id}/`, data)).data,
 
-  async delete(id: number): Promise<void> {
-    try {
-      await api.delete(`/admin/chauffeurs/${id}/`);
-    } catch (error) {
-      throw new Error(handleApiError(error));
-    }
-  }
+  desactiver: async (id: number) =>
+    (await api.delete(`/chauffeurs/${id}/`)).data,
 }
 
-export default new ChauffeurService();
+export default chauffeurService

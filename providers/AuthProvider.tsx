@@ -1,162 +1,135 @@
-'use client';
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Admin, UserRole } from '@/types';
-import authService from '@/services/authService';
+'use client'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { User, Admin, UserRole } from '@/types'
+import authService from '@/services/authService'
 
 interface AuthContextType {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  admin: Admin | null;
-  isAdminAuthenticated: boolean;
-  adminLogin: (email: string, password: string) => Promise<void>;
-  adminLogout: () => Promise<void>;
-  userRole: UserRole | null;
-  hasRole: (role: UserRole) => boolean;
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  error: string | null
+  login: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+  admin: Admin | null
+  isAdminAuthenticated: boolean
+  adminLogin: (email: string, password: string) => Promise<void>
+  adminLogout: () => Promise<void>
+  userRole: UserRole | null
+  hasRole: (role: UserRole) => boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [admin, setAdmin] = useState<Admin | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null)
+  const [admin, setAdmin] = useState<Admin | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    const init = async () => {
       try {
-        setIsLoading(true);
+        // Vérifier admin localStorage d'abord — pas d'appel API
+        if (typeof window !== 'undefined') {
+          const adminLogged = localStorage.getItem('admin_logged')
+          const adminData = localStorage.getItem('admin_data')
+          if (adminLogged === 'true' && adminData) {
+            try {
+              setAdmin(JSON.parse(adminData))
+              return  // ← sortir directement, pas besoin de checker le token
+            } catch {
+              localStorage.removeItem('admin_logged')
+              localStorage.removeItem('admin_data')
+            }
+          }
 
-        // 1. Vérifier admin d'abord (localStorage, pas d'appel API)
-        const adminLogged = localStorage.getItem('admin_logged')
-        const adminData = localStorage.getItem('admin_data')
+          // Vérifier token JWT utilisateur
+          const token = localStorage.getItem('access_token')
+          if (!token) return  // ← pas de token → pas connecté, sortir
 
-        if (adminLogged && adminData) {
-          // Admin connecté → restaurer depuis localStorage sans appel API
-          setAdmin(JSON.parse(adminData))
-          setUser(null)
-          return
-        }
-
-        // 2. Vérifier token JWT utilisateur
-        const token = localStorage.getItem('access_token')
-        if (!token) {
-          // Pas de token → pas connecté
-          setUser(null)
-          setAdmin(null)
-          return
-        }
-
-        // 3. Token présent → vérifier s'il est valide
-        const currentUser = await authService.getCurrentUser()
-        if (currentUser) {
-          setUser(currentUser)
-          setAdmin(null)
-        } else {
-          // Token invalide → nettoyer
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user_data')
-          setUser(null)
-          setAdmin(null)
+          // Token présent → vérifier avec l'API
+          const currentUser = await authService.getCurrentUser()
+          if (currentUser) setUser(currentUser)
         }
       } catch (err) {
         console.error('Auth init error:', err)
-        // En cas d'erreur → nettoyer tout
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user_data')
-        setUser(null)
-        setAdmin(null)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user_data')
+        }
       } finally {
-        setIsLoading(false)
+        setIsLoading(false)  // ← toujours appelé
       }
-    };
+    }
 
-    initializeAuth();
-  }, []);
+    init()
+  }, [])
 
   const login = async (email: string, password: string) => {
     try {
-      setError(null);
-      setIsLoading(true);
-      const userData = await authService.login(email, password);
-      setUser(userData);
-      setAdmin(null);
+      setError(null)
+      const data = await authService.login(email, password)
+      setUser(data)
+      setAdmin(null)
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Erreur de connexion'
-      setError(msg);
-      throw new Error(msg);
-    } finally {
-      setIsLoading(false);
+      setError(msg)
+      throw new Error(msg)
     }
-  };
+  }
 
   const logout = async () => {
-    try {
-      setError(null);
-      await authService.logout();
-    } catch (err) {
-      console.error('Logout error:', err)
-    } finally {
-      setUser(null);
-      setAdmin(null);
+    try { await authService.logout() } catch {}
+    finally {
+      setUser(null)
+      setAdmin(null)
     }
-  };
+  }
 
   const adminLogin = async (email: string, password: string) => {
     try {
-      setError(null);
-      setIsLoading(true);
-      const adminData = await authService.adminLogin(email, password);
-      setAdmin(adminData);
-      setUser(null);
+      setError(null)
+      const data = await authService.adminLogin(email, password)
+      setAdmin(data)
+      setUser(null)
     } catch (err: any) {
       const msg = err.response?.data?.error || err.message || 'Erreur connexion admin'
-      setError(msg);
-      throw new Error(msg);
-    } finally {
-      setIsLoading(false);
+      setError(msg)
+      throw new Error(msg)
     }
-  };
+  }
 
   const adminLogout = async () => {
-    try {
-      setError(null);
-      await authService.adminLogout();
-    } catch (err) {
-      console.error('Admin logout error:', err)
-    } finally {
-      setUser(null);
-      setAdmin(null);
+    try { await authService.adminLogout() } catch {}
+    finally {
+      setUser(null)
+      setAdmin(null)
     }
-  };
-
-  const isAuthenticated = !!user;
-  const isAdminAuthenticated = !!admin;
-  const userRole = user?.role || null;
-  const hasRole = (role: UserRole) => userRole === role;
+  }
 
   return (
     <AuthContext.Provider value={{
-      user, isAuthenticated, isLoading, error,
-      login, logout,
-      admin, isAdminAuthenticated,
-      adminLogin, adminLogout,
-      userRole, hasRole,
+      user,
+      isAuthenticated: !!user,
+      isLoading,
+      error,
+      login,
+      logout,
+      admin,
+      isAdminAuthenticated: !!admin,
+      adminLogin,
+      adminLogout,
+      userRole: user?.role as UserRole || null,
+      hasRole: (role) => user?.role === role,
     }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
 }

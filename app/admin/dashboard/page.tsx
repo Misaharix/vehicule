@@ -1,128 +1,138 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
-import { Navbar } from '@/components/Navbar';
-import { Sidebar } from '@/components/Sidebar';
-import adminService from '@/services/adminService';
+'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { Navbar } from '@/components/Navbar'
+import { Sidebar } from '@/components/Sidebar'
+import { StatCard } from '@/components/StatCard'
+import adminService from '@/services/adminService'
+import Link from 'next/link'
+// Installation requise : npm install lucide-react
+import { 
+  Users, 
+  Car, 
+  UserCheck, 
+  FileText, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  Wallet,
+  AlertTriangle,
+  ArrowRight
+} from 'lucide-react'
 
 export default function AdminDashboardPage() {
-  const router = useRouter();
-  const { isAdminAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter()
+  const { isAdminAuthenticated, isLoading: authLoading } = useAuth()
   const [stats, setStats] = useState({
-    total_demandeurs: 0,
-    total_vehicules: 0,
-    total_chauffeurs: 0,
-    total_demandes: 0,
-    demandes_en_attente: 0,
-    demandes_approuvees: 0,
-    demandes_rejetees: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    total_demandeurs: 0, total_vehicules: 0,
+    total_chauffeurs: 0, total_demandes: 0,
+    demandes_en_attente: 0, demandes_approuvees: 0, demandes_rejetees: 0,
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!authLoading && !isAdminAuthenticated) {
-      router.push('/login');
-    }
-  }, [authLoading, isAdminAuthenticated, router]);
+    if (!authLoading && !isAdminAuthenticated) router.push('/login')
+  }, [authLoading, isAdminAuthenticated, router])
 
   useEffect(() => {
-    if (isAdminAuthenticated) {
-      loadStats();
-    }
-  }, [isAdminAuthenticated]);
+    if (isAdminAuthenticated) loadStats()
+  }, [isAdminAuthenticated])
 
   const loadStats = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await adminService.getStats();
-      setStats(data);
-    } catch (err) {
-      setError('Erreur lors du chargement des statistiques');
-    } finally {
-      setIsLoading(false);
+      setIsLoading(true)
+      const data = await adminService.getStats()
+      setStats(data)
+    } catch { 
+      setError('Erreur lors du chargement des statistiques globales') 
+    } finally { 
+      setIsLoading(false) 
     }
-  };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin text-4xl mb-4">🔄</div>
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
   }
 
+  if (authLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-[#1a5c38] rounded-full animate-spin"></div>
+        <p className="text-gray-500 font-medium text-sm">Chargement de l'espace administration...</p>
+      </div>
+    </div>
+  )
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc]">
       <Navbar />
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)]">
         <Sidebar />
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 w-full">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tableau de bord Admin</h1>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">Vue d&apos;ensemble du système</p>
+        
+        <main className="flex-1 p-4 sm:p-6 lg:p-10">
+          
+          {/* Header style Oovoom / UCP */}
+          <div className="mb-8">
+            <span className="text-[10px] uppercase tracking-[2px] font-bold text-gray-400">Supervision</span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-0.5">Tableau de bord Admin</h1>
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">Vue d'ensemble et contrôle global du système logistique</p>
           </div>
 
           {error && (
-            <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg mb-6">
-              <p className="text-red-800 text-xs sm:text-sm">{error}</p>
+            <div className="p-4 bg-red-50 border border-red-100 rounded-xl mb-6 text-red-700 text-sm flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+              <p className="font-medium">{error}</p>
             </div>
           )}
 
           {isLoading ? (
-            <div className="text-center py-8 sm:py-12">
-              <div className="animate-spin text-3xl sm:text-4xl mb-4">🔄</div>
-              <p className="text-gray-600 text-sm sm:text-base">Chargement des statistiques...</p>
+            <div className="flex justify-center py-20">
+               <div className="w-10 h-10 border-4 border-gray-200 border-t-[#1a5c38] rounded-full animate-spin"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-              <StatCard label="Demandeurs" value={stats.total_demandeurs} color="blue" icon="👥" />
-              <StatCard label="Véhicules" value={stats.total_vehicules} color="green" icon="🚗" />
-              <StatCard label="Chauffeurs" value={stats.total_chauffeurs} color="purple" icon="👤" />
-              <StatCard label="Demandes" value={stats.total_demandes} color="orange" icon="📋" />
-              <StatCard label="En attente" value={stats.demandes_en_attente} color="yellow" icon="⏳" />
-              <StatCard label="Approuvées" value={stats.demandes_approuvees} color="green" icon="✅" />
-              <StatCard label="Rejetées" value={stats.demandes_rejetees} color="red" icon="❌" />
-            </div>
-          )}
+            <>
+              {/* Grille des cartes KPI Re-stylisée avec le nouveau composant StatCard */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
+                <StatCard label="Demandeurs" value={stats.total_demandeurs} icon={Users} color="purple" />
+                <StatCard label="Véhicules" value={stats.total_vehicules} icon={Car} color="green" />
+                <StatCard label="Chauffeurs" value={stats.total_chauffeurs} icon={UserCheck} color="blue" />
+                <StatCard label="Total Demandes" value={stats.total_demandes} icon={FileText} color="purple" />
+                <StatCard label="Demandes en attente" value={stats.demandes_en_attente} icon={Clock} color="orange" />
+                <StatCard label="Demandes Approuvées" value={stats.demandes_approuvees} icon={CheckCircle} color="green" />
+                <StatCard label="Demandes Rejetées" value={stats.demandes_rejetees} icon={XCircle} color="red" />
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mt-6 md:mt-8">
-            {[
-              { href: '/admin/demandeurs', icon: '👥', label: 'Gestion Demandeurs', desc: 'Ajouter, modifier, supprimer' },
-              { href: '/admin/vehicules', icon: '🚗', label: 'Gestion Véhicules', desc: 'Gérer la flotte' },
-              { href: '/admin/chauffeurs', icon: '👤', label: 'Gestion Chauffeurs', desc: 'Gérer les chauffeurs' },
-            ].map(({ href, icon, label, desc }) => (
-              <a key={href} href={href}
-                className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition text-center">
-                <div className="text-2xl sm:text-3xl mb-2">{icon}</div>
-                <h3 className="font-bold text-sm sm:text-base text-gray-900">{label}</h3>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">{desc}</p>
-              </a>
-            ))}
-          </div>
+              {/* Section d'accès et d'actions rapides */}
+              <div className="mb-4">
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Raccourcis de gestion</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { href: '/admin/demandeurs', icon: Users, label: 'Demandeurs', color: 'text-purple-600 bg-purple-50' },
+                    { href: '/admin/vehicules', icon: Car, label: 'Véhicules', color: 'text-emerald-600 bg-emerald-50' },
+                    { href: '/admin/chauffeurs', icon: UserCheck, label: 'Chauffeurs', color: 'text-blue-600 bg-blue-50' },
+                    { href: '/admin/financements', icon: Wallet, label: 'Financements', color: 'text-orange-600 bg-orange-50' },
+                  ].map(({ href, icon: Icon, label, color }) => (
+                    <Link 
+                      key={href} 
+                      href={href}
+                      className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:border-gray-200/60 transition-all duration-200 flex flex-col justify-between items-start group relative overflow-hidden h-36"
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 ${color}`}>
+                        <Icon className="w-5 h-5 stroke-[2.2]" />
+                      </div>
+                      
+                      <div className="w-full flex items-center justify-between mt-4">
+                        <h3 className="font-extrabold text-gray-900 text-sm">{label}</h3>
+                        <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#1a5c38] group-hover:text-white transition-all">
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value, icon, color }: {
-  label: string
-  value: number
-  icon: string
-  color: string
-}) {
-  return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-      <div className="text-2xl sm:text-3xl mb-2">{icon}</div>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500">{label}</p>
-    </div>
-  );
+  )
 }
