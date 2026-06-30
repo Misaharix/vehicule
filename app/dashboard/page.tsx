@@ -99,7 +99,7 @@ export default function DashboardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                Good Morning, {user?.first_name || user?.username || 'Mahmud'}! 👋
+                Bonjour, {user?.first_name || user?.username || 'Mahmud'}! 👋
               </h1>
               <p className="text-gray-400 text-xs mt-0.5 font-medium">
                 {user?.poste || 'Logistique'} — <span className="text-[#00b074] font-bold">{user?.role || 'Manager'}</span>

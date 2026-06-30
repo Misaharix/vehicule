@@ -42,6 +42,8 @@ export function Sidebar() {
     { href: '/validations',          label: 'Demandes à valider',   icon: CheckSquare },
     { href: '/logistique/vehicules', label: 'Véhicules',           icon: Car },
     { href: '/logistique/chauffeurs',label: 'Chauffeurs',          icon: UserCheck },
+    { href: '/demandes',    label: 'Mes demandes',         icon: FileText },
+    { href: '/demandes/new',label: 'Nouvelle demande',     icon: PlusCircle },
   ]
 
   const chefLinks = [
